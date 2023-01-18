@@ -1,0 +1,38 @@
+{
+  "name": "minimized",
+  "version": "1.0.0",
+  "description": "CI/CD for GitHub Actions for minifying JS and CSS files",
+  "main": "main.js",
+  "scripts": {
+    "test": "no test",
+    "build": "webpack --config webpack.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tagaca19e/minimized.git"
+  },
+  "author": "Eidmone Tagaca",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Tagaca19e/minimized/issues"
+  },
+  "homepage": "https://github.com/Tagaca19e/minimized#readme",
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "csso": "^5.0.5",
+    "fs": "0.0.1-security",
+    "fs-extra": "^11.1.0",
+    "glob": "^8.1.0",
+    "https-browserify": "^1.0.0",
+    "node-polyfill-webpack-plugin": "^2.0.1",
+    "octokit-plugin-create-pull-request": "^4.1.0",
+    "path": "^0.12.7",
+    "webpack": "^5.75.0"
+  },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false
+  }
+}
