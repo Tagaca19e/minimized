@@ -22,7 +22,7 @@ const MyOctokit = Octokit.plugin(createPullRequest);
     const token = process.env.GITHUB_TOKEN;
 
     // Validate token.
-    if (!token) {
+    if (token === undefined || token.length === 0) {
       throw new Error(
         `Token not found. Please, set a secret token in your repository!`
       );
