@@ -7,9 +7,5 @@ module.exports = {
     filename: 'minimized.js',
     path: path.resolve(__dirname, 'dist'),
   },
-  mode: 'development',
-  plugins: [
-    new NodePolyfillPlugin(),
-  ],
   target: 'node',
 };
