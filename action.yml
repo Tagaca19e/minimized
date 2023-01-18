@@ -9,5 +9,5 @@ outputs:
   files:
     description: 'Test'
 runs:
-  using: 'node16'
+  using: 'node12'
   main: 'dist/minimized.js'
