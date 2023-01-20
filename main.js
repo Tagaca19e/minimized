@@ -63,7 +63,7 @@ const MyOctokit = Octokit.plugin(createPullRequest);
           })
           .finally(function () {
             let encodedStructure = {};
-            if (final.length == files.length && currentBranch === 'minified_branch' && files.length !== 0) {
+            if (final.length == files.length && currentBranch !== 'minified_branch' && files.length !== 0) {
               final.forEach(function (eachData) {
                 encodedStructure[eachData.path] = eachData["content"];
               });
