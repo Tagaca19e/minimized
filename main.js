@@ -14,17 +14,15 @@ const MyOctokit = Octokit.plugin(createPullRequest);
   try {
     let directory = core.getInput("directory");
     const token = process.env.GITHUB_TOKEN;
-
     if (token === undefined || token.length === 0) {
       throw new Error(`
         Token not found. Please, set a secret token in your repository. 
-        To know more about creating tokens, visit: https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
-        To know more about setting up personal access token, visit: https://docs.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
       `);
     }
 
     const currentBranch = github.context.ref.slice(11);
-    if (currentBranch.startsWith('_minisauras_')) {
+    console.log(`Current branch: ${currentBranch}`);
+    if (currentBranch === 'minified_branch') {
       console.log(`Code has been minifed. Branch ${currentBranch} can be merged now.`);
       return;
     }
@@ -39,8 +37,9 @@ const MyOctokit = Octokit.plugin(createPullRequest);
       directory == undefined ||
       directory == null ||
       directory.startsWith(".")
-    )
+    ) {
       directory = "";
+    }
 
     const pattern = `${directory}**/*.{css,js}`;
     const options = {
@@ -48,15 +47,14 @@ const MyOctokit = Octokit.plugin(createPullRequest);
       ignore: ["node_modules/**/*"],
     };
 
-    const newBranchName = '_minisauras_' + Math.random().toString(36).slice(2);
-
+    const newBranchName = 'minified_branch';
 
     glob(pattern, options, function (er, files) {
       if (er) throw new Error("File not found");
       let final = [];
 
       files.forEach(function (file) {
-        Promise.all([readAndMinify(file)])
+        Promise.all([minifyFile(file)])
           .then(function (result) {
             final.push({
               path: file,
@@ -65,8 +63,7 @@ const MyOctokit = Octokit.plugin(createPullRequest);
           })
           .finally(function () {
             let encodedStructure = {};
-
-            if (final.length == files.length && !currentBranch.startsWith('_minisauras_') && files.length !== 0) {
+            if (final.length == files.length && currentBranch === 'minified_branch' && files.length !== 0) {
               final.forEach(function (eachData) {
                 encodedStructure[eachData.path] = eachData["content"];
               });
@@ -76,7 +73,6 @@ const MyOctokit = Octokit.plugin(createPullRequest);
               files.forEach(function (f) {
                 prDescription += `- **${f}** \n`;
               });
-              prDescription += '![cat](https://media1.tenor.com/images/841aeb9f113999616d097b414c539dfd/tenor.gif)';
 
               try {
                 pluginOctokit.createPullRequest({
