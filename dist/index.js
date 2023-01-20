@@ -70287,20 +70287,27 @@ const { Octokit } = __nccwpck_require__(6762);
 const { createPullRequest } = __nccwpck_require__(6205);
 const MyOctokit = Octokit.plugin(createPullRequest);
 
+/**
+ * Reads the personal access token and desired directory
+ * that needs to be minified from workflow.
+ */
 (async function init() {
   try {
-    let directory = core.getInput("directory");
+    let directory = core.getInput('directory');
     const token = process.env.GITHUB_TOKEN;
+
     if (token === undefined || token.length === 0) {
       throw new Error(`
         Token not found. Please, set a secret token in your repository. 
       `);
     }
 
+    console.log('Token: ', token);
     const currentBranch = github.context.ref.slice(11);
-    console.log(`Current branch: ${currentBranch}`);
-    if (currentBranch === 'minified_branch') {
-      console.log(`Code has been minifed. Branch ${currentBranch} can be merged now.`);
+    if (currentBranch === 'minified-branch') {
+      console.log(
+        `Code has been minifed. Branch ${currentBranch} can be merged now.`
+      );
       return;
     }
 
@@ -70313,21 +70320,20 @@ const MyOctokit = Octokit.plugin(createPullRequest);
     if (
       directory == undefined ||
       directory == null ||
-      directory.startsWith(".")
-    ) {
-      directory = "";
-    }
+      directory.startsWith('.')
+    )
+      directory = '';
 
     const pattern = `${directory}**/*.{css,js}`;
     const options = {
       dot: true,
-      ignore: ["node_modules/**/*"],
+      ignore: ['node_modules/**/*'],
     };
 
-    const newBranchName = 'minified_branch';
+    const newBranchName = 'minified-branch';
 
     glob(pattern, options, function (er, files) {
-      if (er) throw new Error("File not found");
+      if (er) throw new Error('File not found');
       let final = [];
 
       files.forEach(function (file) {
@@ -70338,34 +70344,52 @@ const MyOctokit = Octokit.plugin(createPullRequest);
               content: result[0],
             });
           })
-          .finally(function () {
+          .finally(async function () {
             let encodedStructure = {};
-            if (final.length == files.length && currentBranch !== 'minified_branch' && files.length !== 0) {
+
+            if (
+              final.length == files.length &&
+              currentBranch !== 'minified-branch' &&
+              files.length !== 0
+            ) {
               final.forEach(function (eachData) {
-                encodedStructure[eachData.path] = eachData["content"];
+                encodedStructure[eachData.path] = eachData['content'];
               });
 
-              // setting up pr description
               let prDescription = 'Changes in these files:\n';
               files.forEach(function (f) {
                 prDescription += `- **${f}** \n`;
               });
 
-              try {
-                pluginOctokit.createPullRequest({
+              await pluginOctokit
+                .createPullRequest({
                   owner: repoInfo.owner,
                   repo: repoInfo.repo,
                   title: `Minified ${files.length} files`,
                   body: prDescription,
                   head: newBranchName,
-                  changes: [{
-                    files: encodedStructure,
-                    commit: `Minified ${files.length} files`,
-                  },],
+                  changes: [
+                    {
+                      files: encodedStructure,
+                      commit: `Minified ${files.length} files`,
+                    },
+                  ],
+                })
+                .then(function (result) {
+                  const tableData = {
+                    'Pull request url': result.data.url,
+                    'Pull request title': result.data.title,
+                    'Sent by': result.data.user.login,
+                    'Total number of commits': result.data.commits,
+                    Additions: result.data.additions,
+                    Deletions: result.data.deletions,
+                    'Number of files changed': result.data.changed_files,
+                  };
+                  console.table(tableData);
+                })
+                .catch(function () {
+                  process.on('unhandledRejection', () => {});
                 });
-              } catch (error) {
-                throw new Error(error);
-              }
             }
           })
           .catch(function (error) {
@@ -70379,15 +70403,14 @@ const MyOctokit = Octokit.plugin(createPullRequest);
 })();
 
 /**
- * Minifies CSS and JavaScript files using terser and csso.
- * @param {string} file - File to be minified.
- * @return {string} - Minified file content.
+ * Uses terser and csso to minify JavaScript and CSS files.
+ * @param {string} file - Containing file path to be minified.
+ * @return {string} - Minified content.
  */
-async function minifyFile(file) {
+const minifyFile = async function (file) {
   const content = fs.readFileSync(file, 'utf8');
   const extension = path.extname(file);
 
-  // Check for file extension and minify accordingly.
   if (extension === '.js') {
     const result = await minify(content, {
       compress: true,
@@ -70395,8 +70418,10 @@ async function minifyFile(file) {
     return result.code;
   } else if (extension === '.css') {
     return csso.minify(content).css;
+  } else {
+    console.log('Other files');
   }
-}
+};
 
 })();
 
